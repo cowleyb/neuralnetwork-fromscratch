@@ -15,7 +15,7 @@ def main():
   pytorch_classifier.test(model, x_test, y_test)
   print("Done testing")
 
-  # pytorch_classifier.show_predictions(model, x_test, y_test)
+  pytorch_classifier.show_predictions(model, x_test, y_test)
   print("Done showing predictions")
   # pytorch_classifier.show_mistakes(model, x_test, y_test)
   print("Done showing mistakes")
