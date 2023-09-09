@@ -2,51 +2,78 @@ import numpy as np
 import math 
 import read_data
 
-Neurons = [784, 196, 196, 10]
-
-l0 = np.zeros(Neurons[0])
-l1 = np.zeros(Neurons[1])
-l2 = np.zeros(Neurons[2])
-l3 = np.zeros(Neurons[3])
-
-Weightslp1 = np.tile(0.01, (Neurons[1], Neurons[0]))
-Weightslp2 = np.tile(0.01, (Neurons[3], Neurons[2]))
-
-Biaslp1 = np.tile(0.01, Neurons[1])
-Biaslp2 = np.tile(0.01, Neurons[3])
-
-def linear(weight, bias, input):
-    out = np.dot(weight, input)
+def linear(weight, bias, input_data):
+    out = np.dot(weight, input_data)
     out = np.add(out, bias)
     return out
 
 def relu(layer):
-    for i in range(len(layer)):
-        if layer[i] < 0:
-            layer[i] = 0
-    return layer
+    return np.maximum(layer, 0)
+    # for i in range(len(layer)):
+    #     if layer[i] < 0:
+    #         layer[i] = 0
+    # return layer
 
 def logsoftmax(layer):
-    for i in range(len(layer)):
-        try:
-            layer[i] = math.exp(layer[i])
-        except:
-            print(layer[i])
+    # for i in range(len(layer)):
+    #     try:
+    #         layer[i] = math.exp(layer[i])
+    #     except:
+    #         print(layer[i])
+    # sumlayer = layer.sum()
+    # for i in range(len(layer)):
+    #     layer[i] = np.log(layer[i]/sumlayer)
+    return np.log(np.exp(layer)/np.sum(np.exp(layer)))
 
-    sumlayer = layer.sum()
-    for i in range(len(layer)):
-        layer[i] = np.log(layer[i]/sumlayer)
-    return layer
 
-def forward(l0):
-    l1 = relu(linear(Weightslp1, Biaslp1, l0))
-    l2 = logsoftmax(linear(Weightslp2, Biaslp2, l1))
-
+def forward(input_data, parameters):
+    l1 = relu(linear(parameters["weights1"], parameters["bias1"], input_data))
+    l2 = logsoftmax(linear(parameters["weights2"], parameters["bias2"], l1))
     return l2
 
-(x_train, y_train),(x_test, y_test) = read_data.load_data()
-x_train = np.array(x_train[3])
+def initialize_parameters(network):
+    np.random.seed(1)
+    parameters = {}
+    for i in range (1, len(network)):
+        weights = np.random.randn(network[i], network[i-1])*0.01
+        bias =  np.zeros((network[i], 1))
 
-l0 = x_train.flatten()
+        # Store in dictionary
+        parameters['weights' + str(i)] = weights
+        parameters['bias' + str(i)] = bias
 
-print(forward(l0))
+    return parameters
+
+def update_parameters(parameters, gradients, learning_rate):
+    print("to be implemented")
+
+def calculate_cost(output, label):
+    # CONVERT LABEL INTO ONE HOT ENCODING
+    #  -1 * out * label 
+    # [0,0,0,0,1,0,0,0,0,0]
+    # [-435,-45,45,56,56,546,2,6]
+    return -1 * output * label 
+
+def train(x_train, y_train):
+
+    # Init stuff, can be put into a class later
+    network = [784, 196, 10]
+
+    # Init weights and bias
+    parameters = initialize_parameters(network)
+
+    # Training data
+    x_train = np.array(x_train, dtype=np.float32)
+    y_train = np.array(y_train, dtype=np.int64)
+
+    # Reshape data and transpose
+    x_train = np.reshape(x_train, newshape=(x_train.shape[0], -1)).T
+    y_train = np.reshape(y_train, newshape=(y_train.shape[0], -1))
+
+    print(y_train[0])
+   
+    # print(forward(x_train, parameters))
+    # print(forward(x_train, parameters).shape)
+
+
+  

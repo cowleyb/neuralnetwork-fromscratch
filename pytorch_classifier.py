@@ -1,6 +1,8 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import torchviz
+
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -18,7 +20,7 @@ class NeuralNetwork(nn.Module):
         return x
     
 def train(model, x_train, y_train):
-    model.train()
+    # model.train()
     loss_function = nn.NLLLoss()
     optimizer = torch.optim.SGD(model.parameters(), lr=0.001, momentum=0)
     batch_size = 128
