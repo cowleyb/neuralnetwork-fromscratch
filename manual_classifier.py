@@ -23,8 +23,10 @@ def logsoftmax(layer):
     # sumlayer = layer.sum()
     # for i in range(len(layer)):
     #     layer[i] = np.log(layer[i]/sumlayer)
-    return np.log(np.exp(layer)/np.sum(np.exp(layer)))
-
+    try:
+        return np.log(np.exp(layer)/np.sum(np.exp(layer)))
+    except:
+        print(layer)
 
 def forward(input_data, parameters):
     z1 = linear(parameters["weights1"], parameters["bias1"], input_data)
@@ -49,6 +51,11 @@ def initialize_parameters(network):
 def update_parameters(parameters, gradients, learning_rate):
     print("to be implemented")
 
+    parameters['weights1'] = parameters['weights1'] + gradients['weights1'] * learning_rate
+    parameters['weights2'] = parameters['weights2'] + gradients['weights2'] * learning_rate
+    parameters['bias1'] = parameters['bias1'] + gradients['bias1'] * learning_rate
+    parameters['bias2'] = parameters['bias2'] + gradients['bias2'] * learning_rate
+
 def calculate_cost(output, label):
     # CONVERT LABEL INTO ONE HOT ENCODING
     #  -1 * out * label 
@@ -60,11 +67,6 @@ def train(x_train, y_train):
 
     # Init stuff, can be put into a class later
     network = [784, 196, 10]
-    gradient_w1 = np.zeros((network[1], network[0]))
-    gradient_w2 = np.zeros((network[2], network[1]))
-    gradient_b1 = np.zeros((network[1]))
-    gradient_b2 = np.zeros((network[2]))
-
     # Init weights and bias
     parameters = initialize_parameters(network)
 
@@ -79,9 +81,9 @@ def train(x_train, y_train):
     def gradient_weight2(a1, z2, i):
         grad_w = np.zeros(network[1])
 
-        for i in range(network[1]):
+        for k in range(network[1]):
             #y_train[0] needs to be changed to allow for more tests and the x_train above
-            grad_w[i] = -1 * ((np.exp(z2[(y_train[i]-1)])/np.sum(np.exp(z2))) * a1[i]) - a1[i]
+            grad_w[k] = -1 * ((np.exp(z2[(y_train[i]-1)])/np.sum(np.exp(z2))) * a1[k]) - a1[k]
         #need a statement adding the grad and averaging it instead of just changing
         #gradientw2[(y_train[0]-1)] = grad_w
         return grad_w
@@ -96,8 +98,8 @@ def train(x_train, y_train):
         grad_w = np.zeros((network[1], network[0]))
 
         for k in range(network[1]):
-            for i in range(network[0]):
-                grad_w[k][i] = (np.exp(z2[(y_train[i]-1)])/np.sum(np.exp(z2))) * parameters["weights2"][(y_train[i]-1), k] * np.maximum(z1[k], 0) * input_data[i]
+            for a in range(network[0]):
+                grad_w[k][a] = (np.exp(z2[(y_train[i]-1)])/np.sum(np.exp(z2))) * parameters["weights2"][(y_train[i]-1), k] * np.where(np.maximum(z1[k], 0) > 0, 1, 0) * input_data[a]
             
         #need a statement adding the grad and averaging it instead of just changing
         #gradientw1[:] = grad_w
@@ -107,40 +109,58 @@ def train(x_train, y_train):
         grad_w = np.zeros(network[1])
 
         for k in range(network[1]):
-                grad_w[k] = (np.exp(z2[(y_train[i]-1)])/np.sum(np.exp(z2))) * parameters["weights2"][(y_train[i]-1), k] * np.maximum(z1[k], 0) * 1
+                grad_w[k] = (np.exp(z2[(y_train[i]-1)])/np.sum(np.exp(z2))) * parameters["weights2"][(y_train[i]-1), k] * np.where(np.maximum(z1[k], 0) > 0, 1, 0) * 1
+            
             
         #need a statement adding the grad and averaging it instead of just changing
         #gradientb1[:] = grad_w
         return grad_w
 
+    for j in range(100):
 
+        gradient_w1 = np.zeros((network[1], network[0]))
+        gradient_w2 = np.zeros((network[2], network[1]))
+        gradient_b1 = np.zeros((network[1]))
+        gradient_b2 = np.zeros((network[2]))
+        success = 0
 
-    for i in range(10):
-        # print(forward(x_train, parameters))
-        z1, a1, z2, a2 = forward(x_train[:,i], parameters)
-        # print(forward(x_train[:,0], parameters)[1].shape)
-        # print(forward(x_train[:,0], parameters)[2].shape)
-        # print(forward(x_train[:,0], parameters)[3].shape)
-        
-        if i == 1:
+        for i in range(50):
+            
+            # print(forward(x_train, parameters))
+            z1, a1, z2, a2 = forward(x_train[:,(i+j*100)], parameters)
+            # print(forward(x_train[:,0], parameters)[1].shape)
+            # print(forward(x_train[:,0], parameters)[2].shape)
+            # print(forward(x_train[:,0], parameters)[3].shape)
+            
+            if i == 1:
 
-            gradient_b1[:] = (gradient_bias1(z1, z2, parameters, i))
-            gradient_w1[:] = (gradient_weight1(z1, z2, x_train[:,i], parameters, i))
-            gradient_b2[(y_train[i]-1)] = (gradient_bias2(z2, i))
-            gradient_w2[(y_train[i]-1)] = (gradient_weight2(a1, z2, i))
-        
-        else:
-            gradient_b1[:] = ((gradient_bias1(z1, z2, parameters, i)) + gradient_b1[:])/2
-            gradient_w1[:] = ((gradient_weight1(z1, z2, x_train[:,i], parameters, i)) + gradient_w1[:])/2
-            gradient_b2[(y_train[i]-1)] = ((gradient_bias2(z2, i)) + gradient_b2[(y_train[i]-1)])/2
-            gradient_w2[(y_train[i]-1)] = ((gradient_weight2(a1, z2, i)) + gradient_w2[(y_train[i]-1)])/2
-        
-    print(gradient_w1)
-    print(gradient_w2)
-    print(gradient_b1)
-    print(gradient_b2)
-    a2 = list(a2)
-    print((a2.index(max(a2)))+1)
-    print(y_train)
+                gradient_b1[:] = (gradient_bias1(z1, z2, parameters, (i+j*100)))
+                gradient_w1[:] = (gradient_weight1(z1, z2, x_train[:,(i+j*100)], parameters, (i+j*100)))
+                gradient_b2[(y_train[(i+j*100)]-1)] = (gradient_bias2(z2, (i+j*100)))
+                gradient_w2[(y_train[(i+j*100)]-1)] = (gradient_weight2(a1, z2, (i+j*100)))
+            
+            else:
+                gradient_b1[:] = ((gradient_bias1(z1, z2, parameters, (i+j*100))) + gradient_b1[:])/2
+                gradient_w1[:] = ((gradient_weight1(z1, z2, x_train[:,(i+j*100)], parameters, (i+j*100))) + gradient_w1[:])/2
+                gradient_b2[(y_train[(i+j*100)]-1)] = ((gradient_bias2(z2, (i+j*100))) + gradient_b2[(y_train[(i+j*100)]-1)])/2
+                gradient_w2[(y_train[(i+j*100)]-1)] = ((gradient_weight2(a1, z2, (i+j*100))) + gradient_w2[(y_train[(i+j*100)]-1)])/2
 
-  
+            a2 = list(a2)
+            if ((a2.index(max(a2)))+1) == y_train[(i+j*100)]:
+                success = success + 1
+
+        success = (success/50)*100
+
+        print(f'Success Rate {success} %')
+
+        gradients = {}
+        gradients['weights1'] = gradient_w1
+        gradients['weights2'] = gradient_w2
+        gradients['bias1'] = gradient_b1
+        gradients['bias2'] = gradient_b2
+
+        learning_rate = 0.1
+
+        update_parameters(parameters, gradients, learning_rate)
+    
+    
